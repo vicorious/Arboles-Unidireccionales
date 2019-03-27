@@ -49,14 +49,15 @@ public class Main
 		
 		imprimirRed(red);
 		
-		String fin, origen = "";
+		String fin, origen = "";		
 		Map<String, String> padres = new HashMap<String, String>();
-		String[] ultima = args[args.length - 1].split("-");
-						
+		Map<String, String> distancias = new HashMap<String, String>();
+		
+		String[] ultima = args[args.length - 1].split("-");						
 		origen = ultima[0];
 		fin    = ultima[1];
 		
-		int i = caminoMasCorto(red, origen, fin, padres, 0);
+		int i = caminoMasCorto(red, origen, fin, padres, distancias, 0);
 		
 		System.out.println("Ruta mas corta: ");
 		System.out.println(i);
@@ -149,15 +150,16 @@ public class Main
 	 * @param origen
 	 * @param fin
 	 */
-	private static int caminoMasCorto(List<Nodo> _red, String _inicio, String _fin, Map<String, String> _padres, int _numero_padres)
+	private static int caminoMasCorto(List<Nodo> _red, String _inicio, String _fin, Map<String, String> _padres, Map<String, String> _padres_distancias,  int _numero_padres)
 	{
-		String fin_temp = _fin;
-		Map<String, String> padres 			 =  new HashMap<String, String>();
-		Map<String, Integer> padres_distancia =  new HashMap<String, Integer>();
+		String fin_temp 					  = _fin;
+		String _inicio_temp					  = _inicio;	
+		
+		Map<String, String> padres_distancias = _padres_distancias;
 		
 		int numero_padres = _numero_padres;
 		
-		Optional<Nodo> nodo_init = _red.stream().filter(p -> p.getNombre().equalsIgnoreCase(_inicio)).findFirst();
+		Optional<Nodo> nodo_init = _red.stream().filter(p -> p.getNombre().equalsIgnoreCase(_inicio_temp)).findFirst();
 		
 		for(Nodo nodo: _red)
 		{		
@@ -167,28 +169,77 @@ public class Main
 			{
 				if(nodo.getNombre().equalsIgnoreCase(_inicio))
 					numero_padres++;
+																
+				if(_padres.get(nodo.getNombre()) != null)
+				{
+					//Ancestro cercano
+					_padres.put(nodo.getNombre().concat("-").concat(_padres.get(nodo.getNombre())), nodo_fin.get().getNombre());
+				}
+				_padres.put(nodo.getNombre(), nodo_fin.get().getNombre());
+				padres_distancias.put(nodo.getNombre().concat("-").concat(nodo_fin.get().getNombre()), String.valueOf(nodo_fin.get().getDistancia()));
 				
-				padres.put(nodo.getNombre(), nodo_fin.get().getNombre());
-				padres_distancia.put(nodo.getNombre(), nodo_fin.get().getDistancia());
 			}
+			
 		}
 		
-		for(Map.Entry<String, String> entry: padres.entrySet())
+		for(Map.Entry<String, String> entry: _padres.entrySet())
 		{
-			if(entry.getValue().equalsIgnoreCase(_fin) && !entry.getKey().equalsIgnoreCase(_inicio))
+			if(entry.getValue().equalsIgnoreCase(_fin))
 			{
-				_fin = entry.getKey();
-				break;
+				if(!entry.getKey().equalsIgnoreCase(_inicio))
+				{
+					_fin = entry.getKey();
+				}															
 			}
+			
 		}
 		
-		padres.forEach((llave, valor) -> System.out.println("Padre: "+llave + " Hijo: "+valor));
-		padres_distancia.forEach((llave, valor) -> System.out.println("Padre: "+llave + " Distancia: "+valor));
+		//Unimos los padres en caminos
+		System.out.println("******************************");
+		//_distancias.forEach((llave, valor) -> System.out.println("Pareja: "+llave + " Distancia: "+valor));
+		_padres.forEach((llave, valor) -> System.out.println("Padre: "+llave + " Hijo: "+valor));
+		//padres_distancias.forEach((llave, valor) -> System.out.println("Padre: "+llave + " Distancia: "+valor));
 		
+		String distancia = new String();
+		//Termina de recorrer los padres
 		if(numero_padres >= nodo_init.get().getNodo_der().size())
+		{
+			for(Map.Entry<String, String> entry: _padres.entrySet())
+			{
+				for(Map.Entry<String, String> entry_2: _padres.entrySet())
+				{
+					if(entry.getValue().equalsIgnoreCase(entry_2.getKey()))
+					{							
+						String value_i = _padres.get(entry_2.getValue());														
+							
+						if(value_i != null)
+						{
+							if(value_i.equalsIgnoreCase(_fin))
+							{
+								distancia.concat(entry.getValue()).concat("-").concat(value_i).concat("-").concat(_fin);
+									
+							}else
+							{
+								distancia.concat(entry.getValue()).concat("-").concat(value_i);		
+							}
+															
+							continue;
+						}
+						
+						//padres_distancias.put(entry_2.getKey().concat("-").concat(entry_2.getValue()), padres_distancias.get(entry_2.getKey().concat("-").concat(entry_2.getValue())));
+					}
+				}
+			}			
+			
+			System.out.println("************* FIN *****************");
+			padres_distancias.forEach((llave, valor) -> System.out.println("Padre: "+llave + " Distancia: "+valor));
+			System.out.println(distancia);
 			System.out.println("Numero maximo de conexiones a padres iniciales "+_inicio);
+		}
 		else
-			caminoMasCorto(_red, _inicio, _fin, _padres, numero_padres);		
+		{
+			caminoMasCorto(_red, _inicio, _fin, _padres, padres_distancias, numero_padres);
+		}
 		
 		return 0;
 		
