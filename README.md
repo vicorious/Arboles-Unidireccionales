@@ -11,7 +11,7 @@ Software capaz de armar una red de arboles simplemente encadenados hacia la dere
 
 
 EN EL MAIN.JAVA: 
-> ![Primera](/raw/images/1.PNG)
+> ![Primera](/raw/images/1.png)
 
 
 EJECUTANDO:
