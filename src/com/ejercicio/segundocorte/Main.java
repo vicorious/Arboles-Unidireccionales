@@ -57,7 +57,7 @@ public class Main
 		origen = ultima[0];
 		fin    = ultima[1];
 		
-		int i = caminoMasCorto(red, origen, fin, padres, distancias, 0);
+		int i = caminoMasCorto(red, origen, fin, padres, distancias, 0, fin, origen);
 		
 		System.out.println("Ruta mas corta: ");
 		System.out.println(i);
@@ -150,7 +150,7 @@ public class Main
 	 * @param origen
 	 * @param fin
 	 */
-	private static int caminoMasCorto(List<Nodo> _red, String _inicio, String _fin, Map<String, String> _padres, Map<String, String> _padres_distancias,  int _numero_padres)
+	private static int caminoMasCorto(List<Nodo> _red, String _inicio, String _fin, Map<String, String> _padres, Map<String, String> _padres_distancias,  int _numero_padres, String _fin_temp, String _inicio_temp_)
 	{
 		String fin_temp 					  = _fin;
 		String _inicio_temp					  = _inicio;	
@@ -195,40 +195,47 @@ public class Main
 		}
 		
 		//Unimos los padres en caminos
-		System.out.println("******************************");
+		//System.out.println("******************************");
 		//_distancias.forEach((llave, valor) -> System.out.println("Pareja: "+llave + " Distancia: "+valor));
-		_padres.forEach((llave, valor) -> System.out.println("Padre: "+llave + " Hijo: "+valor));
+		//_padres.forEach((llave, valor) -> System.out.println("Padre: "+llave + " Hijo: "+valor));
 		//padres_distancias.forEach((llave, valor) -> System.out.println("Padre: "+llave + " Distancia: "+valor));
 		
 		String distancia = new String();
+		boolean directo = false;
 		//Termina de recorrer los padres
 		if(numero_padres >= nodo_init.get().getNodo_der().size())
 		{
-			for(Map.Entry<String, String> entry: _padres.entrySet())
+			//Sacamos las rutas directas sin ancestros
+			for(Map.Entry<String, String> entry: _padres_distancias.entrySet())
 			{
-				for(Map.Entry<String, String> entry_2: _padres.entrySet())
+				if(entry.getKey().split("-")[0].equalsIgnoreCase(_inicio_temp_) && entry.getKey().split("-")[1].equalsIgnoreCase(_fin_temp))
 				{
-					if(entry.getValue().equalsIgnoreCase(entry_2.getKey()))
-					{							
-						String value_i = _padres.get(entry_2.getValue());														
-							
-						if(value_i != null)
-						{
-							if(value_i.equalsIgnoreCase(_fin))
-							{
-								distancia.concat(entry.getValue()).concat("-").concat(value_i).concat("-").concat(_fin);
-									
-							}else
-							{
-								distancia.concat(entry.getValue()).concat("-").concat(value_i);		
-							}
-															
-							continue;
-						}
-						
-						//padres_distancias.put(entry_2.getKey().concat("-").concat(entry_2.getValue()), padres_distancias.get(entry_2.getKey().concat("-").concat(entry_2.getValue())));
-					}
+					System.out.println("Primera ruta: "+_inicio_temp_ + "-" + _fin_temp + " Distancia: "+entry.getValue());	
+					directo = true;
 				}
+			}
+			
+			if(directo)
+				_padres_distancias.remove(_inicio_temp_ + "-" + _fin_temp);
+			
+			for(Map.Entry<String, String> entry: _padres_distancias.entrySet())
+			{
+				String[] pareja = entry.getKey().split("-");				
+				String hijo 	= pareja[1];
+				
+				if(hijo.equalsIgnoreCase(_fin_temp))
+				{
+					String camino = new String();
+					
+					camino = unirCaminos(camino, _padres_distancias, entry.getKey(), _inicio_temp_);
+							
+					if(!camino.isEmpty())
+					{						
+						System.out.println("Camino: "+camino);
+					}	
+					
+				}												
+				
 			}			
 			
 			System.out.println("************* FIN *****************");
@@ -238,11 +245,55 @@ public class Main
 		}
 		else
 		{
-			caminoMasCorto(_red, _inicio, _fin, _padres, padres_distancias, numero_padres);
+			caminoMasCorto(_red, _inicio, _fin, _padres, padres_distancias, numero_padres, _fin_temp, _inicio_temp_);
 		}
 		
 		return 0;
 		
 	}//caminoMasCorto
+	
+	/**
+	 * 
+	 * @param _inicio
+	 * @param _inicio_temp
+	 * @param _fin
+	 * @param _camino
+	 * @param _padres
+	 * @return
+	 */
+	public static String unirCaminos(String _camino, Map<String, String> _padres, String _key, String _inicio)
+	{
+		String[] pareja = _key.split("-");
+		String padre = pareja[0];		
+		
+		String distancia_1 = _padres.get(_key);
+		
+		for(Map.Entry<String, String> entry: _padres.entrySet())
+		{
+			String[] pareja_i = _key.split("-");
+			String padre_i 	  = pareja_i[0];
+			String hijo_i  	  = pareja_i[1];
+			
+			if(padre.equalsIgnoreCase(hijo_i))
+			{
+				if(padre_i.equalsIgnoreCase(_inicio))
+				{					
+					_camino = _camino.concat(_key).concat("-").concat(entry.getKey()).concat(":").concat(distancia_1);
+					
+					System.out.println("Camino_i: "+_camino);
+					
+					_camino = "";
+					
+				}else
+				{					
+					_camino = _camino.concat(_key).concat("-").concat(entry.getKey());
+				}
+								
+				distancia_1 = String.valueOf(Integer.parseInt(distancia_1) + Integer.parseInt(entry.getValue()));
+			}
+		}
+								
+		return _camino;
+	}//unirCaminos
 
 }//NoBorrar
